@@ -17,10 +17,10 @@
 					"architecture": "samd",
 					"version": "1.6.20",
 					"category": "Contribute",
-					"url": "file://c:/work/project_arduino/board/Interphonic_arduino.zip",
+					"url": "https://github.com/Halaluya32/Project_Arduino/raw/master/board%20package/Interphonic_arduino.zip",
 					"archiveFileName": "Interphonic_arduino.zip",
-					"checksum": "SHA-256:8c61d76f44fc0f03edb266776b9f515c5c15223b3f9d76a52467790cf78ddc00",
-					"size": "1185840",
+					"checksum": "SHA-256:25d8eca32edf13bac4151c783f574930ccc9282e5e94ddbf98a20afd647ca41a",
+					"size": "1190099",
 					"boards": 
 					[
 						{ "name": "Space Board" }
