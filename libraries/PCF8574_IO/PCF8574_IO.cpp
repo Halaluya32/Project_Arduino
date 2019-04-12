@@ -163,6 +163,7 @@ PCF8574_IO::PCF8574_IO(uint8_t Addr)
 void PCF8574_IO::init(uint8_t init_val)
 {
 	Wire.begin();
+	//Wire.
 	port_out(init_val);
 	port_in();
 	if(INT_pin != 0xFF)set_isr();
