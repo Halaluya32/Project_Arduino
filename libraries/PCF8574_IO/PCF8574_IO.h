@@ -20,6 +20,23 @@
 
 #define Number_of_PC8574 5
 
+#define InitPort0 	0xFF
+#define InitPort1 	0xFF
+#define InitPort2 	0xFF
+#define InitPort3 	0x00
+#define InitPort4 	0x00
+#define InitPort5 	0xFF
+#define InitPort6 	0xFF
+#define InitPort7 	0xFF
+#define InitPort8 	0xFF
+#define InitPort9 	0xFF
+#define InitPort10	0xFF
+#define InitPort11	0xFF
+#define InitPort12	0xFF
+#define InitPort13	0xFF
+#define InitPort14	0xFF
+#define InitPort15	0xFF
+
 class PCF8574_IO
 {
 private:

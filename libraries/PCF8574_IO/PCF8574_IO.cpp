@@ -205,11 +205,55 @@ PCF8574_IO EXP_IO[Number_of_PC8574]{ {0,SW_INT},{1},{2},{3},{4} };
 
 void exp_init()
 {
-	EXP_IO[0].init(0xFF);
-	EXP_IO[1].init(0xFF);
-	EXP_IO[2].init(0xFF);
-	EXP_IO[3].init(0);
-	EXP_IO[4].init(0);
+	#if Number_of_PC8574 > 0 
+		EXP_IO[0].init(InitPort0);
+	#endif
+	#if Number_of_PC8574 > 1
+		EXP_IO[1].init(InitPort1);
+	#endif
+	#if Number_of_PC8574 > 2
+		EXP_IO[2].init(InitPort2);
+	#endif
+	#if Number_of_PC8574 > 3
+		EXP_IO[3].init(InitPort3);
+	#endif
+	#if Number_of_PC8574 > 4
+		EXP_IO[4].init(InitPort4);
+	#endif
+	#if Number_of_PC8574 > 5
+		EXP_IO[5].init(InitPort5);
+	#endif
+	#if Number_of_PC8574 > 6
+		EXP_IO[6].init(InitPort6);
+	#endif
+	#if Number_of_PC8574 > 7
+		EXP_IO[7].init(InitPort7);
+	#endif
+	#if Number_of_PC8574 > 8
+		EXP_IO[8].init(InitPort9);
+	#endif
+	#if Number_of_PC8574 > 8
+		EXP_IO[9].init(InitPort9);
+	#endif
+	#if Number_of_PC8574 > 10
+		EXP_IO[10].init(InitPort10);
+	#endif
+	#if Number_of_PC8574 > 11
+		EXP_IO[11].init(InitPort11);
+	#endif
+	#if Number_of_PC8574 > 12
+		EXP_IO[12].init(InitPort12);
+	#endif
+	#if Number_of_PC8574 > 13
+		EXP_IO[13].init(InitPort13);
+	#endif
+	#if Number_of_PC8574 > 14
+		EXP_IO[14].init(InitPort14);
+	#endif
+	#if Number_of_PC8574 > 15
+		EXP_IO[15].init(InitPort15);
+	#endif	
+	
 }
 
 void exp_pin_out(uint8_t exp_pin_no, uint8_t L0H1)
