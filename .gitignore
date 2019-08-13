@@ -4,3 +4,8 @@ Thumbs.db
 #Ignore Temp file
 
 /*
+!/BoardPackage
+!/libraries/Ethernet_Space_board
+!/libraries/LCD20X4
+!/libraries/PCF8574_IO
+!/libraries/Space_board_LCD20x4
