@@ -30,16 +30,19 @@
 #define DATA_IC_ADDR 4
 /********************************************************/
 
+#define BitMode_4 4
+#define BitMode_8 8
 
 class LCD20x4
 {
 	private:
-		uint8_t X, Y;
+		uint8_t X, Y,BM;
 		uint8_t read(uint8_t RS);
-		void write(uint8_t RS,uint8_t data);
-
-
-
+		void	write(uint8_t RS, uint8_t data);
+		uint8_t read_8bit(uint8_t RS);
+		void	write_8bit(uint8_t RS,uint8_t data);
+		uint8_t read_4bit(uint8_t RS);
+		void	write_4bit(uint8_t RS, uint8_t data);
 		void	entry(uint8_t ID, uint8_t SH);
 		void	disp_ctrl(uint8_t D, uint8_t C, uint8_t B);
 		void	shift(uint8_t SC, uint8_t RL);
@@ -49,15 +52,17 @@ class LCD20x4
 		uint8_t	chk_busy(void);
 		void	write_data(uint8_t Data);
 		uint8_t read_data(void);
-		void	put(const char c);
+		void	init_4bit(bool Cursor_ON = true, bool Cursor_Blink = true);
+		void	init_8bit(bool Cursor_ON = true, bool Cursor_Blink = true);
 	protected:
 		
 	public:
-		LCD20x4(void);
+		LCD20x4(char BitMode);
 		void clr_disp(void);	
 		void home(void);
 		void init(bool Cursor_ON = true, bool Cursor_Blink = true);
-		void print(const char *format, ...);
+		void put(const char c);
+		void printf(const char *format, ...);
 		void set_cursor(uint8_t show, uint8_t blink, uint8_t move_direction, uint8_t shift);
 		void move_cursor(uint8_t pos);
 		void move_cursor(uint8_t col, uint8_t row);

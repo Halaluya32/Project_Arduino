@@ -1,22 +1,17 @@
-#include <PCF8574.h>
-
-PCF8574 IO0,IO1;
-uint8_t i=0;
-
-void INT1_ISR(void)
-{
-  if(IO1.bit_in(0)==0)i=0; 
-}
+#include <Arduino.h>
+#include <Wire.h>
+#include <PCF8574_IO.h>
 
 void setup() {
-  // put your setup code here, to run once:
-  IO0.init(0,false);
-  IO1.init(1,false);
-  pinMode(D1,INPUT);
-  attachInterrupt(D1, INT1_ISR , FALLING);
+	// put your setup code here, to run once:
+	exp_init();
 }
 
+
 void loop() {
-  // put your main code here, to run repeatedly:
-  IO0.port_out(i++);delay(100); 
+	// put your main code here, to run repeatedly:
+	EXP_IO[0].pin_out(0,HIGH);
+	delay(100);
+	EXP_IO[0].pin_out(0,LOW);
+	delay(100);
 }

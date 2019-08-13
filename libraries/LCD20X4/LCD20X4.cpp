@@ -40,38 +40,76 @@ const uint8_t char_addr[4][20] = {	{0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08
 //Private
 uint8_t LCD20x4::read(uint8_t RS)
 {
+	if(BM==BitMode_4)return read_4bit(RS);
+	else return read_8bit(RS);
+}
+
+void LCD20x4::write(uint8_t RS, uint8_t data)
+{
+	if (BM == BitMode_4)return write_4bit(RS,data);
+	else return write_8bit(RS,data);
+}
+
+uint8_t LCD20x4::read_8bit(uint8_t RS)
+{
 	uint8_t res = 0;
 	EXP_IO[CTRL_IC_ADDR].pin_out(RS_pin, RS);
 	EXP_IO[CTRL_IC_ADDR].pin_out(RW_pin, 1);
 	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
-	//delayMicroseconds(1);
 	res = EXP_IO[DATA_IC_ADDR].port_in();
 	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
 	return res;
 }
 
-void LCD20x4::write(uint8_t RS, uint8_t data)
+void LCD20x4::write_8bit(uint8_t RS, uint8_t data)
 {
 	EXP_IO[CTRL_IC_ADDR].pin_out(RS_pin, RS);
 	EXP_IO[CTRL_IC_ADDR].pin_out(RW_pin, 0);
-	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
-	//delayMicroseconds(1);
+	
 	EXP_IO[DATA_IC_ADDR].port_out(data);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
 	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	while (chk_busy());
 }
 
+uint8_t LCD20x4::read_4bit(uint8_t RS)
+{
+	uint8_t res = 0;
+	EXP_IO[CTRL_IC_ADDR].pin_out(RS_pin, RS);
+	EXP_IO[CTRL_IC_ADDR].pin_out(RW_pin, 1);
 
-void	LCD20x4::entry(uint8_t ID, uint8_t SH) 
-{ 
-	while (0x80 & chk_busy());
-	write(0, CMD_Entry_Mode | (ID << 1) | SH); 
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	res = EXP_IO[DATA_IC_ADDR].port_in();
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	res = (res & 0xF0) | (EXP_IO[DATA_IC_ADDR].port_in()>>4);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+
+	return res;
 }
 
-void	LCD20x4::disp_ctrl(uint8_t D, uint8_t C, uint8_t B) 
-{ 
-	while (0x80 & chk_busy()); 
-	write(0, CMD_Disp_Ctrl | (D << 2) | (C << 1) | B); 
+void LCD20x4::write_4bit(uint8_t RS, uint8_t data)
+{
+	data &= 0xFF;
+	
+	EXP_IO[CTRL_IC_ADDR].pin_out(RS_pin, RS);
+	EXP_IO[CTRL_IC_ADDR].pin_out(RW_pin, 0);
+	
+	EXP_IO[DATA_IC_ADDR].port_out(data & 0xF0);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	
+	EXP_IO[DATA_IC_ADDR].port_out(data <<4);	
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+
+	while (chk_busy());
 }
+
+void	LCD20x4::entry(uint8_t ID, uint8_t SH) { write(0, CMD_Entry_Mode | (ID << 1) | SH); }
+
+void	LCD20x4::disp_ctrl(uint8_t D, uint8_t C, uint8_t B) { write(0, CMD_Disp_Ctrl | (D << 2) | (C << 1) | B); }
 
 void	LCD20x4::shift(uint8_t SC, uint8_t RL) { write(0, CMD_Cursor_SH | (SC << 3) | (RL << 2)); }
 
@@ -81,11 +119,13 @@ void	LCD20x4::set_CGRAM(uint8_t Addr) { write(0, CMD_Set_CGRAM | Addr); }
 
 void	LCD20x4::set_DDRAM(uint8_t Addr) { write(0, CMD_Set_DDRAM | Addr); }
 
-uint8_t LCD20x4::chk_busy(void) { delayMicroseconds(100); return read(0); }
+uint8_t LCD20x4::chk_busy(void) {
+	if (read(0) & 0x80)return 1;
+	else return 0;
+}
 
 void	LCD20x4::write_data(uint8_t Data) 
 { 
-	while (0x80 & chk_busy()); 
 	write(1, Data); 	
 
 	X++; 
@@ -103,7 +143,6 @@ void	LCD20x4::write_data(uint8_t Data)
 
 uint8_t LCD20x4::read_data(void) 
 { 
-	while (0x80 & chk_busy()); 
 	X++;
 	if (X >= 20)
 	{
@@ -126,8 +165,10 @@ void	LCD20x4::put(const char c)
 	{
 		case '\0':	break;
 		case '\r':	X = 0; 
+					set_DDRAM(char_addr[Y][X]);
 					break;
 		case '\n':	if(Y<4)Y++; 
+					set_DDRAM(char_addr[Y][X]);
 					break;
 		case '\b':	if (X > 0)X--;
 					else
@@ -145,22 +186,22 @@ void	LCD20x4::put(const char c)
 					X = tx;
 					Y = ty;
 					break;
-		default  :	write_data(c);					
+		default:	write_data(c);					
 					break;
 	}
-	set_DDRAM(char_addr[Y][X]);
+	
 }
 
 //Public
-LCD20x4::LCD20x4(void) 
+LCD20x4::LCD20x4(char BitMode) 
 {
+	BM = BitMode;
 	X = 0;
 	Y = 0;
 }
 
 void	LCD20x4::clr_disp(void) 
 { 
-	while (0x80 & chk_busy()); 
 	write(0, CMD_Clear_disp); 
 	X = 0;
 	Y = 0;
@@ -168,23 +209,82 @@ void	LCD20x4::clr_disp(void)
 
 void	LCD20x4::home(void)     
 { 
-	while (0x80 & chk_busy()); 
 	write(0, CMD_Return_Home);
 	X = 0;
 	Y = 0;
 }
 
-void LCD20x4::init(bool Cursor_ON,bool Cursor_Blink) 
+void LCD20x4::init(bool Cursor_ON, bool Cursor_Blink) {
+	if (BM == BitMode_4)init_4bit(Cursor_ON, Cursor_Blink);
+	else init_8bit(Cursor_ON, Cursor_Blink);
+}
+
+void LCD20x4::init_4bit(bool Cursor_ON, bool Cursor_Blink)
+{
+	delay(500);
+	backlight(false);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(RS_pin, 0);
+	EXP_IO[CTRL_IC_ADDR].pin_out(RW_pin, 0);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	delayMicroseconds(5);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	delayMicroseconds(1);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x20);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	while (chk_busy());
+
+	func_set(0, 1, 0);						// Function set (Interface is 4 bit long.)
+
+	disp_ctrl(0, 0, 0);						//Display off, Curser off, Blink off
+	clr_disp();								//Clear Display and Wait for Busy
+	disp_ctrl(1, Cursor_ON, Cursor_Blink);	//Display on, Curser on, Blink on
+	entry(1, 0);								//Assign Cursor moving inclease direction, Cursor move
+
+	backlight(true);
+}
+
+void LCD20x4::init_8bit(bool Cursor_ON,bool Cursor_Blink) 
 {   
 	delay(500);
 	backlight(false);
 
-	func_set(1, 1, 0);						// Function set (Interface is 8 bit long.)
-	delay(5);
-	func_set(1, 1, 0);						// Function set (Interface is 8 bit long.)
-	delay(1);
-	func_set(1, 1, 0);						// Function set (Interface is 8 bit long.)
-	while (0x80 & chk_busy());
+	EXP_IO[CTRL_IC_ADDR].pin_out(RS_pin, 0);
+	EXP_IO[CTRL_IC_ADDR].pin_out(RW_pin, 0);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	delayMicroseconds(5);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	delayMicroseconds(1);
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+
+
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, HIGH);
+	EXP_IO[DATA_IC_ADDR].port_out(0x30);
+	EXP_IO[CTRL_IC_ADDR].pin_out(EN_pin, LOW);
+	while (chk_busy());
+
 	func_set(1, 1, 0);						// Function set (Interface is 8 bit long.)
 	disp_ctrl(0, 0, 0);						//Display off, Curser off, Blink off
 	clr_disp();								//Clear Display and Wait for Busy
@@ -194,7 +294,7 @@ void LCD20x4::init(bool Cursor_ON,bool Cursor_Blink)
 	backlight(true);	
 }
 
-void LCD20x4::print(const char *format, ...)
+void LCD20x4::printf(const char *format, ...)
 {
 	char buf[23];
 	uint8_t i;
@@ -207,8 +307,6 @@ void LCD20x4::print(const char *format, ...)
 	do {
 		put(buf[i++]);
 	} while (buf[i] != '\0');
-	SerialUSB.println(X);
-	SerialUSB.println(Y);
 }
 
 void LCD20x4::set_cursor(uint8_t show, uint8_t blink, uint8_t move_direction, uint8_t shift)
@@ -237,4 +335,4 @@ void LCD20x4::backlight(bool ON)
 	if (ON)EXP_IO[CTRL_IC_ADDR].pin_out(LCD_Backlight_pin, HIGH);
 	else EXP_IO[CTRL_IC_ADDR].pin_out(LCD_Backlight_pin, LOW);
 }
-LCD20x4 lcd;
+LCD20x4 lcd(BitMode_4);

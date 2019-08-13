@@ -13,8 +13,11 @@
 init			KEYWORD2
 port_out		KEYWORD2
 port_in			KEYWORD2
-bit_out			KEYWORD2
-bit_in			KEYWORD2
+pin_out			KEYWORD2
+pin_in			KEYWORD2
+change_int_pin  KEYWORD2
+exp_init        KEYWORD2
+exp_pin_out     KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)
